@@ -21,11 +21,11 @@ func createTree(depth int) *Tree {
 	if depth > 0 {
 		return &Tree{Left: createTree(depth - 1), Right: createTree(depth - 1)}
 	}
-	return nil
+	return &Tree{}
 }
 
 func checkTree(tree *Tree) int {
-	if tree == nil {
+	if tree.Left == nil {
 		return 1
 	}
 	return 1 + checkTree(tree.Left) + checkTree(tree.Right)
