@@ -22,8 +22,7 @@ func createTree(depth int) *Node {
 	nodes := make([]Node, 0, (2 << depth))
 	recur = func(d int) *Node {
 		if d > 0 {
-			nodes = append(nodes,
-				Node{Left: recur(d - 1), Right: recur(d - 1)})
+			nodes = append(nodes, Node{Left: recur(d - 1), Right: recur(d - 1)})
 		} else {
 			nodes = append(nodes, Node{})
 		}
