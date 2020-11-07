@@ -28,8 +28,7 @@ func createTree(depth int) *Node {
 		}
 		return &nodes[len(nodes)-1]
 	}
-	r(depth)
-	return &nodes[len(nodes)-1]
+	return r(depth)
 }
 
 func checkTree(node *Node) int {
