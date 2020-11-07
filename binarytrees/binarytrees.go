@@ -18,7 +18,7 @@ type Node struct {
 }
 
 type Tree struct {
-	arena []Node
+	arena []Node // typed arena
 	root  *Node
 }
 
