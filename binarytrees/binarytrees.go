@@ -74,7 +74,7 @@ func run(maxDepth int) {
 	group.Add(2)
 	go func() {
 		var tree Tree
-		messages.Store(0, fmt.Sprintf("stretch tree of depth %d\t check: %d",
+		messages.Store(-1, fmt.Sprintf("stretch tree of depth %d\t check: %d",
 			maxDepth+1, tree.create(maxDepth+1).check()))
 		group.Done()
 	}()
@@ -92,7 +92,7 @@ func run(maxDepth int) {
 				chk += tree.create(depth).check()
 			}
 			messages.Store(depth, fmt.Sprintf("%d\t trees of depth %d\t check: %d",
-				i+1, depth, chk))
+				i, depth, chk))
 			group.Done()
 		}(halfDepth*2, iters, 0)
 	}
