@@ -20,7 +20,6 @@ type Node struct {
 func createTree(depth int) *Node {
 	var recur func(depth int) *Node
 	nodes := make([]Node, 0, (2 << depth))
-
 	recur = func(d int) *Node {
 		if d > 0 {
 			nodes = append(nodes,
@@ -35,15 +34,10 @@ func createTree(depth int) *Node {
 }
 
 func checkTree(node *Node) int {
-	var recur func(node *Node) int
-
-	recur = func(node *Node) int {
-		if node.Left == nil {
-			return 1
-		}
-		return 1 + recur(node.Left) + recur(node.Right)
+	if node.Left == nil {
+		return 1
 	}
-	return recur(node)
+	return 1 + checkTree(node.Left) + checkTree(node.Right)
 }
 
 func main() {
