@@ -13,22 +13,43 @@ import (
 	"sync"
 )
 
+type Node struct {
+	Left, Right *Node
+}
+
 type Tree struct {
-	Left, Right *Tree
+	arena []Node
+	root  *Node
 }
 
-func createTree(depth int) *Tree {
-	if depth > 0 {
-		return &Tree{Left: createTree(depth - 1), Right: createTree(depth - 1)}
+func (t *Tree) create(depth int) *Tree {
+	var recur func(depth int) *Node
+	t.arena = make([]Node, 0, (2 << depth))
+
+	recur = func(d int) *Node {
+		if d > 0 {
+			t.arena = append(t.arena,
+				Node{Left: recur(d - 1), Right: recur(d - 1)})
+		} else {
+			t.arena = append(t.arena, Node{})
+		}
+		return &t.arena[len(t.arena)-1]
 	}
-	return &Tree{}
+	recur(depth)
+	t.root = &t.arena[len(t.arena)-1] // last elem is a tree root, after recur
+	return t
 }
 
-func checkTree(tree *Tree) int {
-	if tree.Left == nil {
-		return 1
+func (t *Tree) check() int {
+	var recur func(node *Node) int
+
+	recur = func(node *Node) int {
+		if node.Left == nil {
+			return 1
+		}
+		return 1 + recur(node.Left) + recur(node.Right)
 	}
-	return 1 + checkTree(tree.Left) + checkTree(tree.Right)
+	return recur(t.root)
 }
 
 func main() {
@@ -42,7 +63,7 @@ func main() {
 
 func run(maxDepth int) {
 	const minDepth = 4
-	var longLivedTree *Tree
+	var longLivedTree Tree
 	var group sync.WaitGroup
 	var messages sync.Map
 
@@ -52,13 +73,13 @@ func run(maxDepth int) {
 
 	group.Add(2)
 	go func() {
-		tree := createTree(maxDepth + 1)
-		fmt.Printf("stretch tree of depth %d\t check: %d\n",
-			maxDepth+1, checkTree(tree))
+		var tree Tree
+		messages.Store(0, fmt.Sprintf("stretch tree of depth %d\t check: %d",
+			maxDepth+1, tree.create(maxDepth+1).check()))
 		group.Done()
 	}()
 	go func() {
-		longLivedTree = createTree(maxDepth)
+		longLivedTree.create(maxDepth)
 		group.Done()
 	}()
 
@@ -66,11 +87,12 @@ func run(maxDepth int) {
 		iters := 1 << (maxDepth - (halfDepth * 2) + minDepth)
 		group.Add(1)
 		go func(depth, i, chk int) {
+			var tree Tree
 			for i := 0; i < iters; i++ {
-				chk += checkTree(createTree(depth))
+				chk += tree.create(depth).check()
 			}
 			messages.Store(depth, fmt.Sprintf("%d\t trees of depth %d\t check: %d",
-				i, depth, chk))
+				i+1, depth, chk))
 			group.Done()
 		}(halfDepth*2, iters, 0)
 	}
@@ -89,5 +111,5 @@ func run(maxDepth int) {
 	}
 
 	fmt.Printf("long lived tree of depth %d\t check: %d\n",
-		maxDepth, checkTree(longLivedTree))
+		maxDepth, longLivedTree.check())
 }
