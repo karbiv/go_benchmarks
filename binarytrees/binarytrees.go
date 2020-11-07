@@ -18,25 +18,25 @@ type Node struct {
 }
 
 type Tree struct {
-	arena []Node // typed arena
+	nodes []Node
 	root  *Node
 }
 
 func (t *Tree) create(depth int) *Tree {
 	var recur func(depth int) *Node
-	t.arena = make([]Node, 0, (2 << depth))
+	t.nodes = make([]Node, 0, (2 << depth))
 
 	recur = func(d int) *Node {
 		if d > 0 {
-			t.arena = append(t.arena,
+			t.nodes = append(t.nodes,
 				Node{Left: recur(d - 1), Right: recur(d - 1)})
 		} else {
-			t.arena = append(t.arena, Node{})
+			t.nodes = append(t.nodes, Node{})
 		}
-		return &t.arena[len(t.arena)-1]
+		return &t.nodes[len(t.nodes)-1]
 	}
 	recur(depth)
-	t.root = &t.arena[len(t.arena)-1] // last elem is a tree root, after recur
+	t.root = &t.nodes[len(t.nodes)-1] // last elem is a tree root, after recur
 	return t
 }
 
