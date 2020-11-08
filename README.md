@@ -1,7 +1,7 @@
 
 binary-trees test, an experiment of optimization.
 
-Go implementation rejected by https://benchmarksgame-team.pages.debian.net/benchmarksgame/ as not complying with dogmatic rules of allowed optimizations, which vary among languages.
+Go implementation rejected by https://benchmarksgame-team.pages.debian.net/benchmarksgame/ as not complying with dogmatic rules of allowed optimizations.
 
 Test question from BenchmarksGame's gatekeeper Isaac Gouy was:
 
