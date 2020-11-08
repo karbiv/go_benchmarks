@@ -10,7 +10,7 @@ Test question from BenchmarksGame's gatekeeper Isaac Gouy was:
 
 Some other implementations:
 
-Fastest C program uses `Apache Portable Runtime` library **to avoid using C's memory management**.
+Fastest C program uses `Apache Portable Runtime` library **to avoid using C's memory management**.  
 Fastest Rust program uses `typed_arena` external crate **to avoid Rust's memory management**.
 
-It looks like Go lacks typed arena library.
+It looks like Go lacks a typed arena library.
