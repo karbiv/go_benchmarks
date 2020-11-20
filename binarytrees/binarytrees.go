@@ -18,17 +18,33 @@ type Node struct {
 	Left, Right *Node
 }
 
-func createTree(depth int, nodes *[]Node) *Node {
-	var r func(depth int) *Node
-	r = func(d int) *Node {
-		if d > 0 {
-			*nodes = append(*nodes, Node{Left: r(d - 1), Right: r(d - 1)})
-		} else {
-			*nodes = append(*nodes, Node{})
-		}
-		return &(*nodes)[len(*nodes)-1]
+type Tree struct {
+	chunks [][]Node
+}
+
+const lots = 64
+
+// similar to typed-arena lib in Rust
+func (t *Tree) Allot() *Node {
+	if len(t.chunks[len(t.chunks)-1]) == lots {
+		t.chunks = append(t.chunks, make([]Node, 0, lots))
 	}
-	return r(depth)
+	chunk := append(t.chunks[len(t.chunks)-1], Node{})
+	t.chunks[len(t.chunks)-1] = chunk
+	return &chunk[len(chunk)-1]
+}
+
+func (t *Tree) Init() *Tree {
+	t.chunks = [][]Node{make([]Node, 0, lots)}
+	return t
+}
+
+func createTree(t *Tree, depth int) *Node {
+	node := t.Allot()
+	if depth > 0 {
+		node.Left, node.Right = createTree(t, depth-1), createTree(t, depth-1)
+	}
+	return node
 }
 
 func checkTree(node *Node) int {
@@ -57,16 +73,16 @@ func run(maxDepth int) {
 		maxDepth = minDepth + 2
 	}
 
-	group.Add(2)
+	group.Add(1)
 	go func() {
-		nodes := make([]Node, 0)
+		
 		messages.Store(-1, fmt.Sprintf("stretch tree of depth %d\t check: %d",
-			maxDepth+1, checkTree(createTree(maxDepth+1, &nodes))))
+			maxDepth+1, checkTree(createTree(new(Tree).Init(), maxDepth+1))))
 		group.Done()
 	}()
+	group.Add(1)
 	go func() {
-		nodes := make([]Node, 0)
-		longLivedTree = createTree(maxDepth, &nodes)
+		longLivedTree = createTree(new(Tree).Init(), maxDepth)
 		group.Done()
 	}()
 
@@ -74,10 +90,8 @@ func run(maxDepth int) {
 		iters := 1 << (maxDepth - (halfDepth * 2) + minDepth)
 		group.Add(1)
 		go func(depth, i, chk int) {
-			nodes := make([]Node, 0)
 			for i := 0; i < iters; i++ {
-				chk += checkTree(createTree(depth, &nodes))
-				nodes = nodes[:0]
+				chk += checkTree(createTree(new(Tree).Init(), depth))
 			}
 			messages.Store(depth, fmt.Sprintf("%d\t trees of depth %d\t check: %d",
 				i, depth, chk))
@@ -85,7 +99,7 @@ func run(maxDepth int) {
 		}(halfDepth*2, iters, 0)
 	}
 
-	group.Wait() // wait for all
+	group.Wait()
 
 	var idxs []int
 	messages.Range(func(key, val interface{}) bool {
