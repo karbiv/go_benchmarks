@@ -15,43 +15,28 @@ import (
 )
 
 type Node struct {
-	Left, Right *Node
+	Next *Next
 }
 
-type Tree struct {
-	chunks [][]Node
+type Next struct {
+	left, right Node
 }
 
-const lots = 64
-
-// similar to typed-arena lib in Rust
-func (t *Tree) Allot() *Node {
-	if len(t.chunks[len(t.chunks)-1]) == lots {
-		t.chunks = append(t.chunks, make([]Node, 0, lots))
+func createTree(depth int) Node {
+	if depth > 1 {
+		return Node{&Next{createTree(depth - 1), createTree(depth - 1)}}
 	}
-	chunk := append(t.chunks[len(t.chunks)-1], Node{})
-	t.chunks[len(t.chunks)-1] = chunk
-	return &chunk[len(chunk)-1]
+	return Node{&Next{Node{}, Node{}}}
 }
 
-func (t *Tree) Init() *Tree {
-	t.chunks = [][]Node{make([]Node, 0, lots)}
-	return t
-}
-
-func createTree(t *Tree, depth int) *Node {
-	node := t.Allot()
-	if depth > 0 {
-		node.Left, node.Right = createTree(t, depth-1), createTree(t, depth-1)
+func checkTree(p Node) int {
+	sum := 1
+	current := p.Next
+	for current != nil {
+		sum += checkTree(current.right) + 1
+		current = current.left.Next
 	}
-	return node
-}
-
-func checkTree(node *Node) int {
-	if node.Left == nil {
-		return 1
-	}
-	return 1 + checkTree(node.Left) + checkTree(node.Right)
+	return sum
 }
 
 func main() {
@@ -65,7 +50,7 @@ func main() {
 
 func run(maxDepth int) {
 	const minDepth = 4
-	var longLivedTree *Node
+	var longLivedTree Node
 	var group sync.WaitGroup
 	var messages sync.Map
 
@@ -73,28 +58,26 @@ func run(maxDepth int) {
 		maxDepth = minDepth + 2
 	}
 
-	group.Add(1)
+	group.Add(2)
 	go func() {
-		
 		messages.Store(-1, fmt.Sprintf("stretch tree of depth %d\t check: %d",
-			maxDepth+1, checkTree(createTree(new(Tree).Init(), maxDepth+1))))
+			maxDepth+1, checkTree(createTree(maxDepth+1))))
 		group.Done()
 	}()
-	group.Add(1)
 	go func() {
-		longLivedTree = createTree(new(Tree).Init(), maxDepth)
+		longLivedTree = createTree(maxDepth)
 		group.Done()
 	}()
 
 	for halfDepth := minDepth / 2; halfDepth < maxDepth/2+1; halfDepth++ {
 		iters := 1 << (maxDepth - (halfDepth * 2) + minDepth)
 		group.Add(1)
-		go func(depth, i, chk int) {
+		go func(depth, iters, chk int) {
 			for i := 0; i < iters; i++ {
-				chk += checkTree(createTree(new(Tree).Init(), depth))
+				chk += checkTree(createTree(depth))
 			}
 			messages.Store(depth, fmt.Sprintf("%d\t trees of depth %d\t check: %d",
-				i, depth, chk))
+				iters, depth, chk))
 			group.Done()
 		}(halfDepth*2, iters, 0)
 	}
