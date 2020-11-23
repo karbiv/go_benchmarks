@@ -1,7 +1,8 @@
 // The Computer Language Benchmarks Game
 // http://benchmarksgame.alioth.debian.org/
 //
-//
+// flag.Arg hack by Isaac Gouy
+// "&Next" optimization from C#(twofold speedup) by wasmup (@wasmup)
 // Alexandr Karbivnichiy
 
 package main
@@ -15,7 +16,7 @@ import (
 )
 
 type Node struct {
-	Next *Next
+	next *Next
 }
 
 type Next struct {
@@ -23,6 +24,7 @@ type Next struct {
 }
 
 func createTree(depth int) Node {
+	// &Next reduces copying from stack to heap
 	if depth > 1 {
 		return Node{&Next{createTree(depth - 1), createTree(depth - 1)}}
 	}
@@ -31,10 +33,10 @@ func createTree(depth int) Node {
 
 func checkTree(p Node) int {
 	sum := 1
-	current := p.Next
+	current := p.next
 	for current != nil {
 		sum += checkTree(current.right) + 1
-		current = current.left.Next
+		current = current.left.next
 	}
 	return sum
 }
